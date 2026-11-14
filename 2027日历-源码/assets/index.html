@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>2027日历</title>
+<style>
+:root{
+  --bg:#f6f5f2;
+  --card:#ffffff;
+  --ink:#1f2024;
+  --ink2:#6b6b75;
+  --ink3:#a9a8b1;
+  --line:#ecebe6;
+  --red:#e14b3c;
+  --red-soft:#fdece9;
+  --blue:#43698f;
+  --blue-soft:#eaf0f6;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"PingFang SC","Noto Sans CJK SC","Source Han Sans SC","Helvetica Neue",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  user-select:none;
+}
+#app{display:flex;flex-direction:column;height:100%;}
+
+/* ---------- header ---------- */
+header{
+  background:var(--card);
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  border-bottom:1px solid var(--line);
+  flex:0 0 auto;
+}
+.hd-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.brand{font-size:13px;letter-spacing:.12em;color:var(--ink2);}
+.brand b{color:var(--red);font-weight:600;}
+.today-btn{
+  border:1px solid var(--line);background:#faf9f6;color:var(--ink2);
+  font-size:12px;padding:5px 12px;border-radius:999px;font-family:inherit;
+}
+.today-btn:active{background:#f0efea;}
+.hd-main{display:flex;align-items:center;gap:6px;}
+.nav{
+  width:40px;height:44px;border:0;background:transparent;color:var(--ink2);
+  font-size:22px;line-height:1;border-radius:12px;font-family:inherit;
+}
+.nav:active{background:#f4f3ee;}
+.nav[disabled]{opacity:.25;}
+.title{flex:1;text-align:center;font-size:26px;font-weight:700;letter-spacing:.02em;}
+.title span.unit{font-size:14px;font-weight:500;color:var(--ink2);margin:0 3px 0 1px;}
+.sub{
+  text-align:center;font-size:12px;color:var(--ink2);margin-top:-2px;min-height:16px;
+}
+.sub em{font-style:normal;color:var(--red);font-weight:600;}
+
+/* ---------- body ---------- */
+main{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 4px;}
+section{display:none;animation:fade .18s ease;}
+section.on{display:block;}
+@keyframes fade{from{opacity:.4;}to{opacity:1;}}
+
+.card{background:var(--card);border-radius:18px;padding:12px 8px 10px;box-shadow:0 1px 3px rgba(30,30,40,.05);}
+
+/* week header */
+.wk{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:2px 0 8px;}
+.wk div{font-size:12px;color:var(--ink2);}
+.wk div:nth-child(6),.wk div:nth-child(7){color:var(--red);opacity:.85;}
+
+/* month grid */
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cell{
+  position:relative;height:calc((100vw - 28px - 16px)/7 * 1.06);
+  max-height:64px;min-height:44px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding-top:5px;border-radius:10px;
+}
+.cell .n{font-size:15px;font-weight:600;line-height:1.1;}
+.cell .tag{
+  font-size:9.5px;line-height:1.5;margin-top:1px;letter-spacing:.02em;
+  white-space:nowrap;
+}
+.cell.out .n{color:var(--ink3);font-weight:400;}
+.cell.weekend .n{color:#c25a4e;}
+.cell.out.weekend .n{color:#d9b7b1;}
+.cell.hol{background:var(--red-soft);}
+.cell.hol .n{color:var(--red);}
+.cell.hol .tag{color:var(--red);font-weight:600;}
+.cell.work .tag{color:var(--blue);font-weight:600;}
+.cell.today .n{
+  background:var(--ink);color:#fff;border-radius:8px;padding:0 6px;margin-top:-2px;
+}
+.cell.today.hol .n{background:var(--red);}
+
+/* summary */
+.sum{
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+  margin:10px 4px 4px;font-size:12px;color:var(--ink2);
+}
+.chip{
+  background:#faf9f6;border:1px solid var(--line);border-radius:999px;padding:4px 10px;
+}
+.chip b{color:var(--red);font-weight:600;}
+.chip.blue b{color:var(--blue);}
+.legend{display:flex;justify-content:center;gap:14px;font-size:11px;color:var(--ink3);margin:8px 0 2px;}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:1px;}
+.legend .r{background:var(--red-soft);border:1px solid #f3c9c3;}
+.legend .b{background:var(--blue-soft);border:1px solid #c9d8e6;}
+
+/* ---------- year view ---------- */
+.ystats{
+  display:flex;justify-content:space-around;text-align:center;
+  background:var(--card);border-radius:18px;padding:14px 6px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(30,30,40,.05);
+}
+.ystats div p{margin:0;font-size:20px;font-weight:700;color:var(--red);}
+.ystats div p.b{color:var(--blue);}
+.ystats div p.g{color:var(--ink);}
+.ystats div span{font-size:11px;color:var(--ink2);}
+.mwrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.m{background:var(--card);border-radius:14px;padding:8px 6px 9px;box-shadow:0 1px 3px rgba(30,30,40,.05);}
+.m-h{font-size:12px;font-weight:700;color:var(--ink2);margin:0 2px 6px;display:flex;justify-content:space-between;align-items:center;}
+.m-h b{font-size:13px;color:var(--ink);}
+.m-h em{font-style:normal;font-size:10px;color:var(--red);font-weight:600;}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+.mgrid .wd{font-size:8px;text-align:center;color:var(--ink3);line-height:1.7;}
+.mgrid .d{
+  font-size:9.5px;text-align:center;line-height:1.75;color:var(--ink2);border-radius:3px;
+}
+.mgrid .d.we{color:#c25a4e;}
+.mgrid .d.h{background:var(--red);color:#fff;font-weight:700;}
+.mgrid .d.w{background:var(--blue-soft);color:var(--blue);font-weight:700;}
+.mgrid .d.t{outline:1.5px solid var(--ink);outline-offset:-1px;font-weight:700;}
+
+/* ---------- list view ---------- */
+.hero{
+  background:linear-gradient(135deg,#e14b3c,#c93b31);color:#fff;
+  border-radius:18px;padding:16px 18px;margin-bottom:12px;
+  box-shadow:0 6px 18px rgba(225,75,60,.22);
+}
+.hero .k{font-size:12px;opacity:.85;letter-spacing:.06em;}
+.hero .big{display:flex;align-items:baseline;gap:8px;margin:6px 0 2px;}
+.hero .big strong{font-size:30px;letter-spacing:.02em;}
+.hero .big span{font-size:13px;opacity:.9;}
+.hero .d{font-size:12.5px;opacity:.92;}
+.hy{font-size:13px;font-weight:700;color:var(--ink2);margin:16px 6px 8px;letter-spacing:.04em;}
+.item{
+  background:var(--card);border-radius:16px;padding:13px 16px;margin-bottom:9px;
+  box-shadow:0 1px 3px rgba(30,30,40,.05);
+  display:flex;align-items:center;gap:12px;
+}
+.item.dim{opacity:.5;}
+.item .dt{
+  flex:0 0 auto;width:46px;text-align:center;border-right:1px solid var(--line);padding-right:10px;
+}
+.item .dt b{display:block;font-size:19px;font-weight:700;color:var(--red);line-height:1.1;}
+.item .dt span{font-size:10px;color:var(--ink3);}
+.item .bd{flex:1 1 auto;min-width:0;}
+.item .bd h4{margin:0;font-size:15px;font-weight:700;}
+.item .bd p{margin:3px 0 0;font-size:11.5px;color:var(--ink2);}
+.item .st{
+  flex:0 0 auto;font-size:11px;padding:4px 9px;border-radius:999px;
+  background:#faf9f6;border:1px solid var(--line);color:var(--ink2);white-space:nowrap;
+}
+.item .st.on{background:var(--red-soft);border-color:#f3c9c3;color:var(--red);font-weight:600;}
+.note{font-size:11px;color:var(--ink3);line-height:1.7;margin:14px 6px 4px;}
+.note a{color:var(--ink3);}
+
+/* ---------- tabbar ---------- */
+nav.tab{
+  flex:0 0 auto;display:flex;background:var(--card);border-top:1px solid var(--line);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+nav.tab button{
+  flex:1;border:0;background:transparent;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  color:var(--ink3);font-size:11px;padding:4px 0;
+}
+nav.tab button.on{color:var(--red);font-weight:600;}
+nav.tab button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="hd-top">
+      <span class="brand">20<b>27</b>日历 · 国假版</span>
+      <button class="today-btn" id="todayBtn">今天 11月14日</button>
+    </div>
+    <div class="hd-main">
+      <button class="nav" id="prev">‹</button>
+      <div class="title" id="title"></div>
+      <button class="nav" id="next">›</button>
+    </div>
+    <div class="sub" id="sub"></div>
+  </header>
+
+  <main id="main">
+    <section id="v-month" class="on">
+      <div class="card">
+        <div class="wk"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>
+        <div class="grid" id="grid"></div>
+      </div>
+      <div class="sum" id="sum"></div>
+      <div class="legend">
+        <span><i class="r"></i>法定假日</span>
+        <span><i class="b"></i>调休上班</span>
+        <span><i style="background:#1f2024;border:1px solid #1f2024;"></i>今天</span>
+      </div>
+    </section>
+
+    <section id="v-year">
+      <div class="ystats" id="ystats"></div>
+      <div class="mwrap" id="mwrap"></div>
+    </section>
+
+    <section id="v-list">
+      <div class="hero" id="hero"></div>
+      <div id="listBody"></div>
+      <p class="note" id="note"></p>
+    </section>
+  </main>
+
+  <nav class="tab">
+    <button data-v="month" class="on">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      月视图
+    </button>
+    <button data-v="year">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
+      年视图
+    </button>
+    <button data-v="list">
+      <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+      假期列表
+    </button>
+  </nav>
+</div>
+
+<script>
+/* ======================= 数据 =======================
+   数据来源：国务院办公厅关于2026年、2027年部分节假日安排的通知
+   2026：国办发明电〔2025〕7号
+   2027：国务院办公厅2027年部分节假日安排（2026-11-05 发布）
+=================================================== */
+var DATA = {
+  2026: [
+    {name:'元旦',   short:'元旦', start:'2026-01-01', end:'2026-01-03', days:3, work:['2026-01-04']},
+    {name:'春节',   short:'春节', start:'2026-02-15', end:'2026-02-23', days:9, work:['2026-02-14','2026-02-28']},
+    {name:'清明节', short:'清明', start:'2026-04-04', end:'2026-04-06', days:3, work:[]},
+    {name:'劳动节', short:'劳动', start:'2026-05-01', end:'2026-05-05', days:5, work:['2026-05-09']},
+    {name:'端午节', short:'端午', start:'2026-06-19', end:'2026-06-21', days:3, work:[]},
+    {name:'中秋节', short:'中秋', start:'2026-09-25', end:'2026-09-27', days:3, work:[]},
+    {name:'国庆节', short:'国庆', start:'2026-10-01', end:'2026-10-07', days:7, work:['2026-09-20','2026-10-10']}
+  ],
+  2027: [
+    {name:'元旦',   short:'元旦', start:'2027-01-01', end:'2027-01-03', days:3, work:[]},
+    {name:'春节',   short:'春节', start:'2027-02-05', end:'2027-02-13', days:9, work:['2027-01-31','2027-02-14']},
+    {name:'清明节', short:'清明', start:'2027-04-03', end:'2027-04-05', days:3, work:[]},
+    {name:'劳动节', short:'劳动', start:'2027-05-01', end:'2027-05-05', days:5, work:['2027-05-08']},
+    {name:'端午节', short:'端午', start:'2027-06-09', end:'2027-06-09', days:1, work:[]},
+    {name:'中秋节', short:'中秋', start:'2027-09-15', end:'2027-09-15', days:1, work:[]},
+    {name:'国庆节', short:'国庆', start:'2027-10-01', end:'2027-10-07', days:7, work:['2027-09-26','2027-10-09']}
+  ]
+};
+var YEARS = [2026, 2027];
+
+/* ---------- 工具 ---------- */
+function key(y,m,d){ // m:1-12
+  return y + '-' + (m<10?'0':'') + m + '-' + (d<10?'0':'') + d;
+}
+function parseK(s){var a=s.split('-');return new Date(+a[0], +a[1]-1, +a[2]);}
+function pad(n){return n<10?'0'+n:''+n;}
+function today(){var t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate());}
+function kOf(dt){return key(dt.getFullYear(),dt.getMonth()+1,dt.getDate());}
+function diffDays(a,b){ // b - a
+  return Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())
+                   - Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000);
+}
+function daysInMonth(y,m){return new Date(y,m,0).getDate();}
+
+/* 建立日期索引：'YYYY-MM-DD' -> {name, short, type} */
+var IDX = {};
+var HOL = {};
+(function buildIndex(){
+  YEARS.forEach(function(y){
+    HOL[y]=[];
+    DATA[y].forEach(function(h){
+      var s=parseK(h.start), e=parseK(h.end), cur=new Date(s);
+      while(cur<=e){
+        IDX[kOf(cur)]={name:h.name, short:h.short, type:'holiday'};
+        cur.setDate(cur.getDate()+1);
+      }
+      h.work.forEach(function(w){ IDX[w]={name:'调休上班', short:'班', type:'work'}; });
+      HOL[y].push(h);
+    });
+  });
+})();
+
+/* ======================= 状态 ======================= */
+var mode='month';
+var curY=2026, curM=11;
+var T=today();
+
+function initCursor(){
+  var y=T.getFullYear(), m=T.getMonth()+1;
+  if(y<YEARS[0]){y=YEARS[0];m=1;}
+  if(y>YEARS[YEARS.length-1]){y=YEARS[YEARS.length-1];m=12;}
+  curY=y;curM=m;
+}
+
+/* ======================= 头部 ======================= */
+function nearestHoliday(){
+  var todayK=kOf(T), best=null;
+  YEARS.forEach(function(y){
+    DATA[y].forEach(function(h){
+      var s=parseK(h.start), e=parseK(h.end);
+      if(diffDays(T,e)>=0 && (best===null || diffDays(T,s)<diffDays(T,best.start)))
+        best={h:h, start:s, end:e};
+    });
+  });
+  return best;
+}
+function renderHeader(){
+  var title=document.getElementById('title'), sub=document.getElementById('sub');
+  if(mode==='year'){
+    title.innerHTML = curY + '<span class="unit">年</span>';
+  }else{
+    title.innerHTML = curY + '<span class="unit">年</span>' + curM + '<span class="unit">月</span>';
+  }
+  // 副标题：下一个假期倒计时
+  var nh=nearestHoliday();
+  if(!nh){ sub.innerHTML=''; }
+  else{
+    var left=diffDays(T,nh.start);
+    if(left===0){ sub.innerHTML='<em>'+nh.h.name+'</em> 假期今天开始';}
+    else if(left>0){ sub.innerHTML='下一个假期 <em>'+nh.h.name+'</em> · 还有 <em>'+left+'</em> 天'; }
+    else{
+      var inDay=diffDays(nh.start,T)+1;
+      sub.innerHTML='<em>'+nh.h.name+'</em> 放假中 · 第'+inDay+'/'+nh.h.days+'天';
+    }
+  }
+  // 导航可用性
+  var pv=document.getElementById('prev'), nx=document.getElementById('next');
+  if(mode==='month'){
+    pv.disabled = (curY===YEARS[0] && curM===1);
+    nx.disabled = (curY===YEARS[YEARS.length-1] && curM===12);
+  }else{
+    pv.disabled = (curY===YEARS[0]);
+    nx.disabled = (curY===YEARS[YEARS.length-1]);
+  }
+  document.getElementById('todayBtn').textContent='今天 '+ (T.getMonth()+1) + '月' + T.getDate() + '日';
+}
+
+/* ======================= 月视图 ======================= */
+function renderMonth(){
+  var grid=document.getElementById('grid');
+  var first=new Date(curY, curM-1, 1);
+  var offset=(first.getDay()+6)%7;          // 周一起始
+  var start=new Date(curY, curM-1, 1-offset);
+  var cnt=daysInMonth(curY,curM)+offset;
+  var rows=Math.ceil(cnt/7);
+
+  var html='', todayK=kOf(T);
+  for(var i=0;i<rows*7;i++){
+    var d=new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+    var k=kOf(d), info=IDX[k];
+    var cls='cell';
+    if(d.getMonth()!==curM-1) cls+=' out';
+    var wd=d.getDay();
+    if(wd===0||wd===6) cls+=' weekend';
+    if(info && info.type==='holiday') cls+=' hol';
+    if(info && info.type==='work') cls+=' work';
+    if(k===todayK) cls+=' today';
+    var tag='';
+    if(info) tag='<span class="tag">'+info.short+'</span>';
+    html+='<div class="'+cls+'"><span class="n">'+d.getDate()+'</span>'+tag+'</div>';
+  }
+  grid.innerHTML=html;
+
+  // 本月统计
+  var list=HOL[curY]||[];
+  var hd=0, wd2=0, names=[];
+  list.forEach(function(h){
+    var s=parseK(h.start), e=parseK(h.end);
+    if(s.getFullYear()===curY && s.getMonth()===curM-1){
+      hd+=h.days; names.push(h.name);
+    }
+  });
+  list.forEach(function(h){
+    h.work.forEach(function(w){
+      var d=parseK(w);
+      if(d.getFullYear()===curY && d.getMonth()===curM-1) wd2++;
+    });
+  });
+  var sum=document.getElementById('sum');
+  if(hd===0 && wd2===0){
+    sum.innerHTML='<span class="chip">本月无法定节假日</span>';
+  }else{
+    var s='';
+    if(hd>0) s+='<span class="chip"><b>'+hd+'</b> 天放假 · '+names.join('、')+'</span>';
+    if(wd2>0) s+='<span class="chip blue"><b>'+wd2+'</b> 天调休上班</span>';
+    sum.innerHTML=s;
+  }
+}
+
+/* ======================= 年视图 ======================= */
+function renderYear(){
+  var list=HOL[curY]||[];
+  var totDays=0, totWork=0;
+   list.forEach(function(h){totDays+=h.days;totWork+=h.work.length;});
+  var rest=0;
+  // 剩余假期（今天之后）
+  list.forEach(function(h){ if(diffDays(T,parseK(h.start))>=0) rest+=h.days; });
+
+  document.getElementById('ystats').innerHTML =
+    '<div><p>'+totDays+'</p><span>全年放假(天)</span></div>'+
+    '<div><p class="b">'+totWork+'</p><span>调休上班(天)</span></div>'+
+    '<div><p class="g">'+rest+'</p><span>今天起待休(天)</span></div>';
+
+  var todayK=kOf(T), wrap=document.getElementById('mwrap'), html='';
+  for(var m=1;m<=12;m++){
+    var first=new Date(curY,m-1,1), off=(first.getDay()+6)%7, dim=daysInMonth(curY,m);
+    var names=[];
+    (HOL[curY]||[]).forEach(function(h){
+      var s=parseK(h.start);
+      if(s.getFullYear()===curY && s.getMonth()===m-1) names.push(h.short+'(共'+h.days+'天)');
+    });
+    var cells='';
+    ['一','二','三','四','五','六','日'].forEach(function(w){cells+='<div class="wd">'+w+'</div>';});
+    for(var i=0;i<off;i++) cells+='<div class="d"></div>';
+    for(var d=1;d<=dim;d++){
+      var k=key(curY,m,d), info=IDX[k], wday=new Date(curY,m-1,d).getDay();
+      var c='d';
+      if(wday===0||wday===6) c+=' we';
+      if(info && info.type==='holiday') c='d h';
+      if(info && info.type==='work') c='d w';
+      if(k===todayK) c+=' t';
+      cells+='<div class="'+c+'">'+d+'</div>';
+    }
+    html+='<div class="m"><div class="m-h"><b>'+m+'月</b>'+
+          (names.length?'<em>'+names.join(' ')+'</em>':'')+
+          '</div><div class="mgrid">'+cells+'</div></div>';
+  }
+  wrap.innerHTML=html;
+}
+
+/* ======================= 列表视图 ======================= */
+function renderList(){
+  var all=[];
+  YEARS.forEach(function(y){ DATA[y].forEach(function(h){ all.push(h); }); });
+
+  // hero：下一个假期
+  var nh=nearestHoliday();
+  var hero=document.getElementById('hero');
+  if(nh){
+    var left=diffDays(T,nh.start);
+    var mm=(nh.start.getMonth()+1), dd=nh.start.getDate();
+    var txt = left>0 ? ('还有 <strong style="font-size:15px">'+left+'</strong> 天 · '+(nh.h.work.length+' 天调休')) :
+              (left===0 ? '今天开始放假' : '假期进行中');
+    hero.innerHTML='<div class="k">下一个法定假期</div>'+
+      '<div class="big"><strong>'+nh.h.name+'</strong><span>'+mm+'月'+dd+'日 起 · 共'+nh.h.days+'天</span></div>'+
+      '<div class="d">'+txt+'</div>';
+  }else{
+    hero.innerHTML='<div class="k">当前年度</div><div class="big"><strong>暂无假期</strong></div>';
+  }
+
+  var html='';
+  YEARS.forEach(function(y){
+    var tot=0, tw=0;
+    DATA[y].forEach(function(h){tot+=h.days;tw+=h.work.length;});
+    html+='<div class="hy">'+y+' 年 · 放假 '+tot+' 天 · 调休上班 '+tw+' 天</div>';
+    DATA[y].forEach(function(h){
+      var s=parseK(h.start), e=parseK(h.end);
+      var toStart=diffDays(T,s), toEnd=diffDays(T,e);   // s-T, e-T
+      var st='', cls='item';
+      if(toEnd<0){                             // 已结束
+        cls+=' dim'; st='已结束';
+      }else if(toStart===0){
+        st='今天开始';
+      }else if(toStart<0){                     // 进行中
+        st='放假中 第'+(-toStart+1)+'/'+h.days+'天';
+      }else{
+        st='还有 '+toStart+' 天';
+      }
+      var work = h.work.length ? ' · 调休 '+h.work.map(function(w){
+            var d=parseK(w); return (d.getMonth()+1)+'/'+d.getDate();
+          }).join('、')+' 上班' : '';
+      var range=(s.getMonth()+1)+'月'+s.getDate()+'日 – '+(e.getMonth()+1)+'月'+e.getDate()+'日';
+      var badgeCls = (st.indexOf('放假中')>=0||st==='今天开始'||st==='今天开始') ? 'st on' : 'st';
+      html+='<div class="'+cls+'">'+
+        '<div class="dt"><b>'+h.days+'</b><span>天</span></div>'+
+        '<div class="bd"><h4>'+h.name+'</h4><p>'+range+work+'</p></div>'+
+        '<div class="'+badgeCls+'">'+st+'</div></div>';
+    });
+  });
+  document.getElementById('listBody').innerHTML=html;
+  document.getElementById('note').innerHTML =
+    '数据依据国务院办公厅正式通知：<br>'+
+    '· 2026 年 —《国务院办公厅关于2026年部分节假日安排的通知》国办发明电〔2025〕7号<br>'+
+    '· 2027 年 — 国务院办公厅 2027 年部分节假日安排（2026年11月5日发布）<br>'+
+    '本应用完全离线运行，不采集任何个人信息。';
+}
+
+/* ======================= 渲染调度 ======================= */
+function render(){
+  renderHeader();
+  if(mode==='month') renderMonth();
+  else if(mode==='year') renderYear();
+  else renderList();
+}
+function switchMode(m){
+  mode=m;
+  document.querySelectorAll('nav.tab button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.v===m);
+  });
+  document.querySelectorAll('main section').forEach(function(s){
+    s.classList.toggle('on', s.id==='v-'+m);
+  });
+  document.getElementById('main').scrollTop=0;
+  render();
+}
+document.querySelectorAll('nav.tab button').forEach(function(b){
+  b.addEventListener('click', function(){ switchMode(b.dataset.v); });
+});
+
+document.getElementById('prev').addEventListener('click', function(){
+  if(mode==='month'){
+    if(curM===1){ if(curY>YEARS[0]){curY--;curM=12;} }
+    else curM--;
+  }else if(curY>YEARS[0]) curY--;
+  render();
+});
+document.getElementById('next').addEventListener('click', function(){
+  if(mode==='month'){
+    if(curM===12){ if(curY<YEARS[YEARS.length-1]){curY++;curM=1;} }
+    else curM++;
+  }else if(curY<YEARS[YEARS.length-1]) curY++;
+  render();
+});
+document.getElementById('todayBtn').addEventListener('click', function(){
+  initCursor(); T=today(); render();
+});
+
+/* 启动 */
+initCursor();
+render();
+</script>
+</body>
+</html>

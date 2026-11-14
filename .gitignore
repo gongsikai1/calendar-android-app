@@ -1,0 +1,13 @@
+# 构建中间产物与本地签名材料，不纳入版本库
+build/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.log
+
+# apksigner 生成的签名辅助文件
+*.idsig
+
+# 临时目录
+.tmp-tool-results/
